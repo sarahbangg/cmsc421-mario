@@ -325,11 +325,10 @@ class sga:
                 penalty += 1
             # apply rule to get agent's new state
             x, y, dir = self.userule(action, x, y, dir)
-            if x > curr_max:
-                curr_max = x
+            if y > curr_max:
+                curr_max = y
             if self.dies(
                x, y, env):      # if ant enters boundary cell then it dies
-                # return food found so far
                 return (max(curr_max - (0.25 * penalty), 0))
         return (max(curr_max - (0.25 * penalty), 0))
 

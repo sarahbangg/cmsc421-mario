@@ -39,7 +39,9 @@ self.ccw = {'R':'L','L':'R'}   # rotate orientation counter-cw
 #max jump 4 up, 7 to the right/left, slight curving to tile system
 #GJ = Jump 4 by 4, GF = go forward one tile, GF4 = go foward 4 tiles with a little bunny hop
 #GF5 = go forward 5 tiles with a bigger jump,  GD = drop in direction facing by 1
-self.legalActs = np.array(['GJ','GF','GF4', 'GF5', 'GD'])    # legal ant actions
+#have a new turn rule (begin incrementing complexity), like GT? go turn?
+#3 bits for 6 actions. heavily weight GJ and GF. 
+self.legalActs = np.array(['GJ','GF','GF4', 'GF5', 'GD', 'GFD'])    # legal ant actions
 
 # The remaining items refer to methods of the class sga:
 
@@ -73,27 +75,28 @@ def simulate(self,rules,tMax):  # simulate rules for tMax time steps
     max_distance = 203                #farthest distance from the left gone
     #true distance is 214 10 padding for after
     curr_max = 12                        #farthest distance from the left gone
-    penalty = 0.0
+    penalty = 0
     for t in range(tMax):
       view = self.sees(x,y,dir,env)     # sees() returns visual field as 1D array 
       able = validrule(x,y,dir,env)
+      if able.size == 0:
+        print('stuck in: x:' + str(x) + ', y:' + str(y))
       r = self.rulematch(rules,view)    # finds, returns first matching rule     NEEDED
       if np.size(r) != 0:               # if find a rule r that applies
-        if r in able:
-          action = self.decode(r)         # decode r's action as 'GF'/'GR'/'GL'    NEEDED
-        else:
-          action = able[random.randint(0,(len(able)))]
+        action = self.decode(r)         # decode r's action as 'GF'/'GR'/'GL'    NEEDED
+          if action not in able:
+            action = able[random.randint(0,(len(able)))]
+            penalty += 1
       else:                             # none of ant's rules apply
         action = able[random.randint(0,(len(able)))]  # random default action 
+        penalty += 1
+      moves += 1
       x,y,dir = self.userule(action,x,y,dir)   # apply rule to get agent's new state
       if x > curr_max:
         curr_max = x
       if self.dies(x,y,env):      # if ant enters boundary cell then it dies
-        return curr_max - (0.25*penalty)          # return food found so far 
-      if env[x,y] == 1:           # if food found at new location
-        foodfound += 1            # increment foodfound
-        env[x,y] = 0              # consume food 
-    return curr_max - (0.25*penalty)   
+        return (curr_max - (0.25*penalty))          # return food found so far 
+    return (curr_max - (0.25*penalty), moves)   
 
 
 #change sees
@@ -117,9 +120,9 @@ def sees(self,x,y,dir,env):      # returns what ant at x,y sees in direction dir
 # ant's view (visual field). If no rules match, array([]) is returned.
 
 #need rulematch
-#6 bits now for view
+#6 bits now for view, but before it was 3 possible actions, now 6, so doubled rules?
 def rulematch(self,rules,view,able):  
-   for chunk in np.split(rules, 10):  
+   for chunk in np.split(rules, 20):  
       if np.array_equal(chunk[:6], view):
         return chunk
    return np.array([])           # no rules match (return empty array)
@@ -127,7 +130,9 @@ def rulematch(self,rules,view,able):
 def validrule(self,x,y,dir,env):
   #GJ = Jump 4 by 4, GF = go forward one tile, GF4 = go foward 4 tiles with a little bunny hop
   #GF5 = go forward 5 tiles with a bigger jump,  GD = drop in direction facing by 1
-  normal_mvmt = np.array(['GJ','GF','GF4', 'GF5', 'GD'])    # legal ant actions
+  #NEED BOTH DIAGONAL DROP AND STRAIGHT DROP 
+
+  normal_mvmt = np.array(['GJ','GF','GF4', 'GF5', 'GD', 'GFD'])    # legal ant actions
   new_mvmt = normal_mvmt
   if dir == 'R':
     if (env[x-4,y+4] == 1):
@@ -141,10 +146,18 @@ def validrule(self,x,y,dir,env):
 
     if (env[x,y+4] == 1):
       new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GF5'))
-
-    if (env[x+1,y] == 0):
-      new_mvmt = np.array(['GD'])
     
+    if (env[x+1, y+1] == 1):
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GFD'))
+
+    if (env[x+1,y] == 1):
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GD'))
+    elif (env[x+1,y] == 0):
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GJ'))
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GF'))
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GF4'))
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GF5'))
+
     return new_mvmt
 
   elif dir == 'L':
@@ -160,38 +173,53 @@ def validrule(self,x,y,dir,env):
     if (env[x,y-4] == 1):
       new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GF5'))
 
-    if (env[x+1,y] == 0):
-      new_mvmt = np.array(['GD'])
+    if (env[x+1, y-1] == 1):
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GFD'))
+
+    if (env[x+1,y] == 1):
+      new_mvmt = np.delete(new_mvmt, np.where(new_mvmt == 'GD'))
 
     return new_mvmt
 
   else:
     print('Error in validrule')
 
-
+normal_mvmt = np.array(['GJ','GF','GF4', 'GF5', 'GD'])  
 #need userule
 def userule(self,act,x,y,dir):   # take action act at locn x,y having orientation dir    
-    if act == 'GF':               # if action is Go Forward, return agent's new state
-      if   dir == 'U': return x-1,y,dir
-      elif dir == 'R': return x,y+1,dir
-      elif dir == 'D': return x+1,y,dir
+    if act == 'GJ':               # if action is Go Forward, return agent's new state
+      if   dir == 'R': return x-4,y+4,dir
+      elif dir == 'L': return x-4,y-4,dir
+      else:
+        print("ERROR in userule(): unrecognize dir = ",dir)
+        return x,y,dir
+    elif act == 'GF':           
+      if   dir == 'R': return x,y+1,dir
       elif dir == 'L': return x,y-1,dir
       else:
         print("ERROR in userule(): unrecognize dir = ",dir)
         return x,y,dir
-    elif act == 'GR':             # if action is Go Right, return agent's new state
-      if   dir == 'U': return x,y+1,self.cw[dir]
-      elif dir == 'R': return x+1,y,self.cw[dir]
-      elif dir == 'D': return x,y-1,self.cw[dir]
-      elif dir == 'L': return x-1,y,self.cw[dir]
+    elif act == 'GF4':           
+      if   dir == 'R': return x,y+3,dir
+      elif dir == 'L': return x,y-3,dir
       else:
         print("ERROR in userule(): unrecognize dir = ",dir)
         return x,y,dir
-    elif act == 'GL':             # if action is Go Left, return agent's new state
-      if   dir == 'U': return x,y-1,self.ccw[dir]
-      elif dir == 'R': return x-1,y,self.ccw[dir]
-      elif dir == 'D': return x,y+1,self.ccw[dir]
-      elif dir == 'L': return x+1,y,self.ccw[dir]
+    elif act == 'GF5':           
+      if   dir == 'R': return x,y+4,dir
+      elif dir == 'L': return x,y-4,dir
+      else:
+        print("ERROR in userule(): unrecognize dir = ",dir)
+        return x,y,dir
+    elif act == 'GD':           
+      if   dir == 'R': return x+1,y,dir
+      elif dir == 'L': return x+1,y,dir
+      else:
+        print("ERROR in userule(): unrecognize dir = ",dir)
+        return x,y,dir
+    elif act == 'GFD':           
+      if   dir == 'R': return x+1,y+1,dir
+      elif dir == 'L': return x+1,y-1,dir
       else:
         print("ERROR in userule(): unrecognize dir = ",dir)
         return x,y,dir
@@ -204,13 +232,27 @@ def userule(self,act,x,y,dir):   # take action act at locn x,y having orientatio
 #need decode
 def decode(self,bits):           
    # *** TO BE WRITTEN ***
-  return 'GF'    # DELETE THIS LINE
+
+   #np.array(['GJ','GF','GF4', 'GF5', 'GD', 'GFD']) 
+  movement = 'GJ'
+   if np.array_equal(bits[6:], [0, 0, 0]):
+      movement = 'GD'
+   if np.array_equal(bits[6:], [0, 0, 1]):
+      movement = 'GFD'
+   if np.array_equal(bits[6:], [0, 1, 0]):
+      movement = 'GF5'
+   if np.array_equal(bits[6:], [1, 0, 0]):
+      movement = 'GF4'
+   if np.array_equal(bits[6:], [0, 1, 1]):
+      movement = 'GF'
+   if np.array_equal(bits[6:], [1, 0, 1]):
+      movement = 'GF'
+   return movement    
    
 
 #need dies
 def dies(self,x,y,env):          # agent dies if in boundary cell
-  maxx,maxy = np.shape(env)     # max locns in state space
-  if (x == 0) or (x == (maxx - 1)) or\
-      (y == 0) or (y == (maxy - 1)):       # ant is in boundary cell
+  if (x >= 17) or\
+      (y <= 9) or (y >= 205):   
       return True                          # so it dies
 return False                            # ant lives

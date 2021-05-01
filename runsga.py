@@ -1,4 +1,4 @@
 import SGA
-
-ga = SGA.sga(180, 100, 41, 0.001, 0.4)
+#stringLength, popSize, nGens, pm, pc
+ga = SGA.sga(108, 100, 41, 0.001, 0.4)
 ga.runGA()

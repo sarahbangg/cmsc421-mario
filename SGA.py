@@ -194,7 +194,7 @@ class sga:
             self.bestchrome, self.bestloc, self.bestfit))
 
     # conduct tournaments to select two offspring
-
+    # play with this (fitness proportionate selection)
     def tournament(self, pop, fitness, popsize):  # fitness array, pop size
         # select first parent par1
         cand1 = np.random.randint(popsize)      # candidate 1, 1st tourn., int
@@ -215,13 +215,35 @@ class sga:
         else:  # else 2nd parent par2 is cand2
             par2 = cand2
         return par1, par2
+    # play with this
+    # try 2 and random 1-2 xover?
 
     def xover(self, child1, child2):    # single point crossover
         # cut locn to right of position (hence subtract 1)
-        locn = np.random.randint(0, self.stringLength - 1)
-        tmp = np.copy(child1)       # save child1 copy, then do crossover
-        child1[locn + 1:self.stringLength] = child2[locn + 1:self.stringLength]
-        child2[locn + 1:self.stringLength] = tmp[locn + 1:self.stringLength]
+        cuts = random.randint(1, 2)
+        if cuts == 1:
+            locn = np.random.randint(0, self.stringLength - 1)
+            tmp = np.copy(child1)       # save child1 copy, then do crossover
+            child1[locn + 1:self.stringLength] = child2[locn + 1:self.stringLength]
+            child2[locn + 1:self.stringLength] = tmp[locn + 1:self.stringLength]
+            return child1, child2
+        # cannot xover at the first bit
+        locn1 = np.random.randint(1, self.stringLength - 1)
+        locn2 = locn1
+        while locn2 == locn1:
+            locn2 = np.random.randint(1, self.stringLength - 1)
+        if locn1 > locn2:
+            tmp = np.copy(child1)
+            child1[0:locn2] = child2[0:locn2]
+            child1[locn1:self.stringLength] = child2[locn1:self.stringLength]
+            child2[0:locn2] = tmp[0:locn2]
+            child2[locn1:self.stringLength] = tmp[locn1:self.stringLength]
+            return child1, child2
+        tmp = np.copy(child1)
+        child1[0:locn2] = child2[0:locn2]
+        child1[locn1:self.stringLength] = child2[locn1:self.stringLength]
+        child2[0:locn2] = tmp[0:locn2]
+        child2[locn1:self.stringLength] = tmp[locn1:self.stringLength]
         return child1, child2
 
     def mutate(self, pop):            # bitwise point mutations
@@ -305,6 +327,8 @@ class sga:
         # true distance is 214 10 padding for after
         curr_max = 12  # farthest distance from the left gone
         penalty = 0
+        # additional move cost for like bunny hopping?
+        #
         for t in range(tMax):
             # sees() returns visual field as 1D array
             view = self.sees(x, y, dir, env)
@@ -348,7 +372,7 @@ class sga:
             return np.zeros(6)
 
     def rulematch(self, rules, view):
-        for chunk in np.split(rules, 20):
+        for chunk in np.split(rules, 12):
             if np.array_equal(chunk[:6], view):
                 return chunk
         return np.array([])           # no rules match (return empty array)
@@ -469,6 +493,12 @@ class sga:
 
     def decode(self, bits):
         # *** TO BE WRITTEN ***
+        # also maybe elitism?
+        # asdfasdfasdf useful chunk 1 asdfasdf     adsfasdf          asdfasdfasdf
+        # markers for useful/useless dna ^
+        # randomly useful/useless play with that
+        # maybe deactivate multiples
+        #
 
         # np.array(['GJ','GF','GF4', 'GF5', 'GD', 'GFD'])
         movement = 'GJ'
@@ -488,6 +518,7 @@ class sga:
 
 
 # need dies
+
 
     def dies(self, x, y, env):          # agent dies if in boundary cell
         if (x >= 17) or (y <= 9) or (y >= 205):

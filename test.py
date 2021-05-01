@@ -9,7 +9,9 @@ def stateEncode(state, info):
     encoded = np.zeros((25,32), dtype=int)
 
     #Mario
-    yLevel = int((len(state) - int((info["y_pos"] + 1) / 20) * 8 - 16) / 8) - 5
+    yLevel = int((len(state) - info["y_pos"] + 49) / 8) - 5
+    print("YLevel: " + str(yLevel))
+    print("Y: " + str(info["y_pos"]))
     marioSearch = state[yLevel * 8: yLevel * 8 + 16,:]
     for y in range(yLevel, yLevel + 2):
         for x in range(11,16):
@@ -67,7 +69,7 @@ def printState(state):
         print(" Hight: " + str(y * 8 + 44))
 
 done = True
-for step in range(100):
+for step in range(75):
     if done:
         state = env.reset()
     if step % 25 == 0:

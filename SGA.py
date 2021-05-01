@@ -4310,7 +4310,7 @@ class sga:
     # so 25/21 * 194 = 231
     # play with 200/231
     # 4 * 1 + 2*3 = 10/6
-    # 203/(10/6)
+    # 203/(10/6) = 122, give some time pressure, bunny hops cheat out distance
     def fitFcn(self, pop):  # compute population fitness
         det_fitness = np.array([])  # initialize fitness values (1D array)
         for chromosome in pop:

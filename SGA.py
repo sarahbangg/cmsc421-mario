@@ -4352,7 +4352,11 @@ class sga:
                 action = able[random.randint(0, (len(able)) - 1)]
                 penalty += 1
                 # turn on rules
-                self.turnon(rules, view)
+                # "smart epigenetics"
+                test = self.wouldable(rules, view)
+                textaction = self.decode(test)
+                if action in able:
+                    self.turnon(rules, view)
 
             # apply rule to get agent's new state
             x, y, dir = self.userule(action, x, y, dir)
@@ -4414,6 +4418,13 @@ class sga:
                     chunk[0] = 1
                     return True
         return False
+
+    def wouldable(self, rules, view):
+        for chunk in np.split(rules, 24):
+            if np.array_equal(chunk[0], 0):
+                if np.array_equal(chunk[1:7], view):
+                    return chunk
+        return np.array([])
 
     def validrule(self, x, y, dir, env):
         # GJ = Jump 4 by 4, GF = go forward one tile, GF4 = go foward 4 tiles with a little bunny hop

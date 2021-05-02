@@ -29,7 +29,10 @@ class sga:
         self.bestfitarray = np.zeros(self.nGens + 1)  # array of max fitness vals each generation
         self.meanfitarray = np.zeros(self.nGens + 1)  # array of mean fitness vals each generation
 
-        self.initPopulation()
+        self.pop = np.random.rand(self.popSize,self.stringLength)
+        self.pop = np.where(self.pop<0.5,1,0)  # create initial pop
+
+        #self.initPopulation()
 
     def initPopulation(self):
         # Initial Population
@@ -50,30 +53,35 @@ class sga:
             fid.write("  {}  {}\n".format(self.pop[c,:],fitness[c]))
         fid.write("Best initially:\n  {} at locn {}, fitness = {}\n".format(self.bestchrome,self.bestloc,self.bestfit))
 
-    def fitFcn(self,pop):          # compute population fitness values   
+    def fitFcn(self,pop, gen=0):          # compute population fitness values   
         fitness = np.zeros(self.popSize)     # initialize fitness values (1D array)
+        TMax = int(gen / 10) * 50 + 100 
         for p in range(self.popSize):        # Loop through population
-            fitness[p] = self.simulate(pop[p],250)   # Simulate run for fitness
+            fitness[p] = self.simulate(pop[p],TMax)   # Simulate run for fitness
         return fitness
+
+    def simulateBest(self, tMax):
+        self.simulate(self.bestchrome, tMax, visualize=True)
 
     def simulate(self,rules,tMax,visualize=False):  # simulate rules for tMax time steps 
         state = env.reset()         # Restart the game environment
         rTotal = 0
         state, reward, done, info = env.step(0) # Conduct null move
 
-        for step in range(tMax):    # Loop through each game step
+        for step in range(0,tMax,5):    # Loop through each game step
             visualEcoding, marioLoc = self.stateEncode(state, info)   # Get Visual Encoding
-            rule = self.rulematch(rules, visualEcoding, marioLoc)     # finds, returns first matching rule
+            rule = self.rulematchE(rules, visualEcoding, marioLoc)     # finds, returns first matching rule
             action = self.decode(rule)                      # Gets decoded action
 
-            state, reward, done, info = env.step(action) # Conduct move based on AI
-            rTotal += reward
+            for i in range(5):
+                state, reward, done, info = env.step(action) # Conduct move based on AI
+                rTotal += reward
 
-            if(visualize):
-                self.fid.write(str(action))
-                env.render()
-            if done:                # End if end reached
-                break
+                if(visualize):
+                    self.fid.write(str(action))
+                    env.render()
+                if done or info["life"] < 2:                # End if end reached
+                    break
 
         return rTotal               # Return reward given by emulator
 
@@ -152,6 +160,30 @@ class sga:
             return [0,0,0]
         return rules[i+20:i+23]
 
+    def rulematchE(self, rules, visual, marioLoc):
+        if marioLoc == []:
+            marioLoc = [19,14]
+        importantSpots = [(marioLoc[0] + 2, marioLoc[1]), (marioLoc[0], marioLoc[1] - 2), (marioLoc[0] + 5, marioLoc[1]), (marioLoc[0] + 5, marioLoc[1] - 2), (marioLoc[0] + 12, marioLoc[1] + 4)]
+        visualToGene = []
+        
+        for x,y in importantSpots:
+            if(visual[y][x] == 1 or visual[y][x] == 2 or visual[y][x] == 3):
+                visualToGene.append(1)
+            else:
+                visualToGene.append(0)
+
+        best = 0
+        i = -1
+        for r in range(0, len(rules), 8):
+            match = 5 - np.count_nonzero(rules[r:r+5] - visualToGene)
+            if match > best:
+                best = match
+                i = r
+
+        if(i == -1):
+            return [0,0,0]
+        return rules[i+5:i+8]
+
     def decode(self, rule):
         rule = list(rule)
         if(rule == [0,0,0]):
@@ -211,7 +243,8 @@ class sga:
         bestChrom = [0,0,0,0]
         for gen in range(self.nGens): # for each generation gen
             # Compute fitness of the pop
-            fitness = self.fitFcn(self.pop)  # measure fitness 
+            if(gen == 0):
+                fitness = self.fitFcn(self.pop, gen=gen)  # measure fitness 
             # initialize new population
             newPop = np.zeros((self.popSize,self.stringLength),dtype = 'int64')
             # create new population newPop via selection and crossovers with prob pc
@@ -227,7 +260,7 @@ class sga:
             # mutations to population with probability pm
             newPop = self.mutate(newPop)
             self.pop = newPop 
-            fitness = self.fitFcn(self.pop)    # fitness values for population
+            fitness = self.fitFcn(self.pop, gen=gen)    # fitness values for population
             self.bestfit = fitness.max()       # fitness of (first) most fit chromosome
             self.bestfitarray[gen + 1] = self.bestfit        # save best fitness for plotting
             self.meanfitarray[gen + 1] = fitness.mean()      # save mean fitness for plotting
@@ -287,19 +320,27 @@ class sga:
 
 
 if __name__ == "__main__":
-    genExample = sga(115, 50, 100, 0.5, 0.001) # Change to 230 for 10 rule run
-    genExample.runGA()
-    genExample.simulate(sga.bestchrome, 500, True)
+    # genExample = sga(115, 50, 100, 0.5, 0.001) # Change to 230 for 10 rule run
+    genExample = sga(40, 50, 50, 0.5, 0.001) # Smaller Chromosome Version with Increasing TMax
+    #genExample.runGA()
+    #input("Ready for best run?")
+    #genExample.simulateBest(500)
     #humanMadeRules = [0,0,0,0, 0,0,0,0, 0,1,1,1, 0,1,0,0, 0,0,0,0, 1,0,0,
     #                  1,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,0,0, 0,0,0,0, 0,0,0,
     #                  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,
     #                  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,
     #                  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,]
-    #print(genExample.simulate(humanMadeRules, 500, True))
+    AIMadeRules = np.array([1,0,0,0,0, 0,1,1,
+                            0,1,0,1,1, 0,0,1,
+                            1,0,1,1,1, 1,0,0,
+                            1,1,1,0,1, 1,0,0,
+                            1,1,1,1,1, 1,0,0])
+    print(genExample.simulate(AIMadeRules, 500, True))
     input("")
+    fid.close()
 
 # Chromosome: 10 rules
 # Rules:
 #   Visual: 4 * 5 bits (4 visual types [air, block, pipe, goomba] and
 #                       5 spots [infront, beneath, medium infront, medium infront beneath, far above])
-#   Action: 3 bits ([right, right, right jump, right jump, right run jump, jump, left, none]
+#   Action: 3 bits ([right, right, right jump, right run, right run jump, jump, left, none]

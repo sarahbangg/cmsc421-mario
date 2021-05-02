@@ -4338,15 +4338,22 @@ class sga:
             # finds, returns first matching rule     NEEDED
             r = self.rulematch(rules, view)
             if np.size(r) != 0:  # if find a rule r that applies
-                # decode r's action as 'GF'/'GR'/'GL'    NEEDED
+                # turn off unable rules
                 action = self.decode(r)
                 if action not in able:
                     action = able[random.randint(0, (len(able)) - 1)]
                     penalty += 1
-            else:  # none of ant's rules apply
+                    # means rules found doesn't apply , essentially useless
+                    # turn it off maybe?
+                    self.turnoff(rules, view)
+
+            else:  # none of ant's rules apply, might be turned off
                 # random default action
                 action = able[random.randint(0, (len(able)) - 1)]
                 penalty += 1
+                # turn on rules
+                self.turnon(rules, view)
+
             # apply rule to get agent's new state
             x, y, dir = self.userule(action, x, y, dir)
             if y > curr_max:
@@ -4387,10 +4394,26 @@ class sga:
             return np.zeros(6)
 
     def rulematch(self, rules, view):
-        for chunk in np.split(rules, 12):
-            if np.array_equal(chunk[:6], view):
-                return chunk
+        for chunk in np.split(rules, 24):
+            if np.array_equal(chunk[0], 1):
+                if np.array_equal(chunk[1:7], view):
+                    return chunk
         return np.array([])  # no rules match (return empty array)
+
+    def turnoff(self, rules, view):
+        for chunk in np.split(rules, 24):
+            if np.array_equal(chunk[0], 1):
+                if np.array_equal(chunk[1:7], view):
+                    chunk[0] = 0
+                    return True
+
+    def turnon(self, rules, view):
+        for chunk in np.split(rules, 24):
+            if np.array_equal(chunk[0], 0):
+                if np.array_equal(chunk[1:7], view):
+                    chunk[0] = 1
+                    return True
+        return False
 
     def validrule(self, x, y, dir, env):
         # GJ = Jump 4 by 4, GF = go forward one tile, GF4 = go foward 4 tiles with a little bunny hop

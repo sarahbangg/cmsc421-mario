@@ -53,11 +53,12 @@ class sga:
     def fitFcn(self,pop):          # compute population fitness values   
         fitness = np.zeros(self.popSize)     # initialize fitness values (1D array)
         for p in range(self.popSize):        # Loop through population
-            fitness[p] = self.simulate(pop[p],25)   # Simulate run for fitness
+            fitness[p] = self.simulate(pop[p],250)   # Simulate run for fitness
         return fitness
 
     def simulate(self,rules,tMax,visualize=False):  # simulate rules for tMax time steps 
         state = env.reset()         # Restart the game environment
+        rTotal = 0
         state, reward, done, info = env.step(0) # Conduct null move
 
         for step in range(tMax):    # Loop through each game step
@@ -66,14 +67,15 @@ class sga:
             action = self.decode(rule)                      # Gets decoded action
 
             state, reward, done, info = env.step(action) # Conduct move based on AI
-            
+            rTotal += reward
+
             if(visualize):
                 self.fid.write(str(action))
                 env.render()
             if done:                # End if end reached
                 break
 
-        return reward               # Return reward given by emulator
+        return rTotal               # Return reward given by emulator
 
     def stateEncode(self, state, info):
         encoded = np.zeros((25,32), dtype=int)
@@ -235,7 +237,7 @@ class sga:
             if (self.bestfit > bestChrom[3]):
                 bestChrom = [self.bestchrome, gen, self.bestloc, self.bestfit]
                 
-            if (np.mod(gen,10)==0):            # print epoch, max fitness
+            if (np.mod(gen,2)==0):            # print epoch, max fitness
                 print("generation: ",gen+1,"max fitness: ",self.bestfit) 
         fid.write("\nfinal population, fitnesses: (up to 1st 100 chromosomes)\n")
         fitness = self.fitFcn(self.pop)         # compute population fitnesses
@@ -285,14 +287,15 @@ class sga:
 
 
 if __name__ == "__main__":
-    genExample = sga(115, 50, 2, 0.5, 0.001) # Change to 230 for real 10 rule run
-    #genExample.runGA()
-    humanMadeRules = [0,0,0,0, 0,0,0,0, 0,1,1,1, 0,1,0,0, 0,0,0,0, 1,0,0,
-                      1,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,0,0, 0,0,0,0, 0,0,0,
-                      0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,
-                      0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,
-                      0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,]
-    print(genExample.simulate(humanMadeRules, 500, True))
+    genExample = sga(115, 50, 100, 0.5, 0.001) # Change to 230 for 10 rule run
+    genExample.runGA()
+    genExample.simulate(sga.bestchrome, 500, True)
+    #humanMadeRules = [0,0,0,0, 0,0,0,0, 0,1,1,1, 0,1,0,0, 0,0,0,0, 1,0,0,
+    #                  1,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,0,0, 0,0,0,0, 0,0,0,
+    #                  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,
+    #                  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,
+    #                  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,]
+    #print(genExample.simulate(humanMadeRules, 500, True))
     input("")
 
 # Chromosome: 10 rules

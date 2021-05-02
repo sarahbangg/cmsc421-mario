@@ -4337,18 +4337,12 @@ class sga:
             if able.size == 0:
                 print("stuck in: x:" + str(x) + ", y:" + str(y))
             # finds, returns first matching rule     NEEDED
-            r = self.majorityrules(rules, view)
+            r = self.rulematch(rules, view)
             if np.size(r) != 0:  # if find a rule r that applies
-                if np.size(r)/9 > 1:
-                    action = self.decodemajority(r)
-                    if action not in able:
-                        action = able[random.randint(0, (len(able)) - 1)]
-                        penalty += 1
-                if np.size(r)/9 == 1:
-                    action = self.decode(r)
-                    if action not in able:
-                        action = able[random.randint(0, (len(able)) - 1)]
-                        penalty += 1
+                action = self.decode(r)
+                if action not in able:
+                    action = able[random.randint(0, (len(able)) - 1)]
+                    penalty += 1
                     # means rules found doesn't apply , essentially useless
                     # turn it off maybe?
 
@@ -4398,10 +4392,9 @@ class sga:
             return np.zeros(6)
 
     def rulematch(self, rules, view):
-        for chunk in np.split(rules, 24):
-            if np.array_equal(chunk[0], 1):
-                if np.array_equal(chunk[1:7], view):
-                    return chunk
+        for chunk in np.split(rules, 12):
+            if np.array_equal(chunk[:6], view):
+                return chunk
         return np.array([])  # no rules match (return empty array)
 
     def turnoff(self, rules, view):
@@ -4560,44 +4553,43 @@ class sga:
 
         # np.array(['GJ','GF','GF4', 'GF5', 'GD', 'GFD'])
         movement = "GJ"
-        if np.array_equal(bits[6:], [0, 0, 0]):
+        if np.array_equal(bits[15:], [0, 0, 0]):
             movement = "GD"
-        if np.array_equal(bits[6:], [0, 0, 1]):
+        if np.array_equal(bits[15:], [0, 0, 1]):
             movement = "GFD"
-        if np.array_equal(bits[6:], [0, 1, 0]):
+        if np.array_equal(bits[15:], [0, 1, 0]):
             movement = "GF5"
-        if np.array_equal(bits[6:], [1, 0, 0]):
+        if np.array_equal(bits[15:], [1, 0, 0]):
             movement = "GF4"
-        if np.array_equal(bits[6:], [0, 1, 1]):
+        if np.array_equal(bits[15:], [0, 1, 1]):
             movement = "GF"
-        if np.array_equal(bits[6:], [1, 0, 1]):
+        if np.array_equal(bits[15:], [1, 0, 1]):
             movement = "GF"
         return movement
 
     def decodemajority(self, bits):
         # np.array(['GJ','GF','GF4', 'GF5', 'GD', 'GFD'])
         movements = defaultdict(int)
-        for chunk in np.split(bits, bits.size/9):
+        for chunk in np.split(bits, bits.size / 9):
             if np.array_equal(bits[6:], [0, 0, 0]):
-                movements['GD'] += 1
+                movements["GD"] += 1
             elif np.array_equal(bits[6:], [0, 0, 1]):
-                movements['GFD'] += 1
+                movements["GFD"] += 1
             elif np.array_equal(bits[6:], [0, 1, 0]):
-                movements['GF5'] += 1
+                movements["GF5"] += 1
             elif np.array_equal(bits[6:], [1, 0, 0]):
-                movements['GF4'] += 1
+                movements["GF4"] += 1
             elif np.array_equal(bits[6:], [0, 1, 1]):
-                movements['GF'] += 1
+                movements["GF"] += 1
             elif np.array_equal(bits[6:], [1, 0, 1]):
-                movements['GF'] += 1
+                movements["GF"] += 1
             else:
-                movements['GF'] += 1
+                movements["GF"] += 1
         vals = movements.values()
         max_val = max(vals)
         for ele in movements.keys():
             if movements[ele] == max_val:
                 return ele
-
 
     # need dies
 

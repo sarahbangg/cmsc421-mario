@@ -72,13 +72,16 @@ done = True
 for step in range(75):
     if done:
         state = env.reset()
-    if step % 25 == 0:
-        state, reward, done, info = env.step(1)
-    else:
-        state, reward, done, info = env.step(4)
+    #if step % 25 == 0:
+    #    state, reward, done, info = env.step(1)
+    #else:
+    #    state, reward, done, info = env.step(4)
     #state, reward, done, info = env.step(env.action_space.sample())
     #print("State:")
-    print(str(info["x_pos"]) + ", " + str(info["y_pos"]))
+    #print(str(info["x_pos"]) + ", " + str(info["y_pos"]))
+    action = int(input("Action: "))
+    for i in range(5):
+        state, reward, done, info = env.step(action)
     env.render()
 
 printState(stateEncode(state, info))

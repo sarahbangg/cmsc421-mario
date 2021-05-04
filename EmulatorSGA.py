@@ -311,8 +311,8 @@ class sga:
 
 
 if __name__ == "__main__":
-    visualSpots = [(3,0), (3, 1), (3, 3), (5, 0), (5, 2), (5, 5), (2, -2), (4, -2)]
-    genExample = sga(11, 10, 50, 500, 0.06, 0.25, visualSpots) # Smaller Chromosome Version with Increasing TMax
+    visualSpots = [(3,0), (3, 1), (3, 3), (5, 0), (5, 2), (5, 5), (2, -2), (2, -4), (4, -2), (4, -4), (6, -2)]
+    genExample = sga(14, 15, 50, 500, 0.06, 0.25, visualSpots) # Smaller Chromosome Version with Increasing TMax
     genExample.runGA()
-    #chromo = [1,1,1,0,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,1,1,0,0,1,0,1,0,0,1,0,0,1,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,0,1,0,1,1,1,1,1,1,0,1,0,0,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0,0,0,0,0,0,1,1,1,1,1,0]
+    #chromo = []
     #genExample.simulateCust(chromo, 1000)

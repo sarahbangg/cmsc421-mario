@@ -50,6 +50,8 @@ class sga:
         rTotal = 0
         state, reward, done, info = env.step(0) # Conduct null move
         jumpCount = 0
+        maxXcount = 0
+        tempX = 0
         if(visualize):
             self.fid.write("Best Chromosome Actions for {} Steps\n * Every move is done 5 times".format(tMax))
 
@@ -61,7 +63,6 @@ class sga:
                 jumpCount += 5
             if(visualize):
                 self.fid.write(str(action))
-
             for i in range(5):
                 if(jumpCount > 20):
                     state, reward, done, info = env.step(action - 1) # Refresh Jump
@@ -72,8 +73,14 @@ class sga:
 
                 if(visualize):
                     env.render()
-                if done or info["life"] < 2:                # End if end reached
-                    break
+                if done or info["life"] < 2 or maxXcount > 10:                # End if end reached
+                    return rTotal
+
+            if(tempX >= info["x_pos"]):
+                maxXcount += 1
+            else:
+                tempX = info["x_pos"]
+                maxXcount = 0
 
         return rTotal               # Return reward given by emulator
 
@@ -304,6 +311,17 @@ class sga:
 
 
 if __name__ == "__main__":
-    visualSpots = [(3,0), (3, 1), (5, 0), (5, 2), (2, -2), (4, -2)]
-    genExample = sga(9, 10, 50, 100, 0.01, 0.25, visualSpots) # Smaller Chromosome Version with Increasing TMax
+    visualSpots = [(3,0), (3, 1), (3, 3), (5, 0), (5, 2), (2, -2), (4, -2)]
+    genExample = sga(10, 10, 50, 100, 0.07, 0.25, visualSpots) # Smaller Chromosome Version with Increasing TMax
     genExample.runGA()
+    #chromo = [0,1,0,1,0,1,1,0,0,
+    #          1,0,0,0,0,0,1,1,1,
+    #          1,1,1,0,0,1,1,0,0,
+    #          0,1,1,1,0,0,0,1,1,
+    #          1,0,1,1,1,0,1,0,1,
+    #          0,0,0,0,1,0,0,0,0,
+    #          0,1,0,0,1,1,0,0,0,
+    #          1,0,1,1,0,0,1,1,1,
+    #          1,1,0,1,0,1,1,0,0,
+    #          1,1,0,1,1,0,0,0,1]
+    #genExample.simulateCust(chromo, 1000)

@@ -104,8 +104,8 @@ class sga:
             marioTL = [19,14]
 
         for c in self.visualSpots:
-            x = min(max((marioTL[0] + c[0]) * 8 + 4, 0), 256)
-            y = min(max((marioTL[1] + c[1]) * 8 + 44, 0), 240)
+            x = min(max((marioTL[0] + c[0]) * 8 + 4, 0), 255)
+            y = min(max((marioTL[1] + c[1]) * 8 + 44, 0), 239)
             pixel = list(state[y][x])
 
             if(pixel == [104, 136, 252] or # Sky
@@ -306,22 +306,13 @@ class sga:
 
         fig.tight_layout()
         plt.title("Mean and Best Fitnesses vs Generation with Time Steps")
-        plt.savefig('figs/fig' + str(self.ruleSize) + "-" + str(self.numRules) + "-" + str(self.popSize) + "-" + str(self.nGens) + "-" + str(self.pm) + "-" + str(self.pc) + ".pdf")
+        plt.savefig('figs/fig' + str(self.ruleSize) + "-" + str(self.numRules) + "-" + str(self.popSize) + "-" + str(self.nGens) + "-" + str(self.pm) + "-" + str(self.pc) + ".pdf", bbox_inches='tight')
         plt.show()
 
 
 if __name__ == "__main__":
-    visualSpots = [(3,0), (3, 1), (3, 3), (5, 0), (5, 2), (2, -2), (4, -2)]
-    genExample = sga(10, 10, 50, 100, 0.07, 0.25, visualSpots) # Smaller Chromosome Version with Increasing TMax
+    visualSpots = [(3,0), (3, 1), (3, 3), (5, 0), (5, 2), (5, 5), (2, -2), (4, -2)]
+    genExample = sga(11, 10, 50, 500, 0.06, 0.25, visualSpots) # Smaller Chromosome Version with Increasing TMax
     genExample.runGA()
-    #chromo = [0,1,0,1,0,1,1,0,0,
-    #          1,0,0,0,0,0,1,1,1,
-    #          1,1,1,0,0,1,1,0,0,
-    #          0,1,1,1,0,0,0,1,1,
-    #          1,0,1,1,1,0,1,0,1,
-    #          0,0,0,0,1,0,0,0,0,
-    #          0,1,0,0,1,1,0,0,0,
-    #          1,0,1,1,0,0,1,1,1,
-    #          1,1,0,1,0,1,1,0,0,
-    #          1,1,0,1,1,0,0,0,1]
+    #chromo = [1,1,1,0,1,1,1,1,0,0,0,0,1,0,0,1,0,0,0,1,1,0,0,1,0,1,0,0,1,0,0,1,1,0,1,1,1,0,0,0,1,1,0,1,1,0,0,0,1,0,1,1,1,1,1,1,0,1,0,0,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,0,0,0,0,0,0,0,1,1,1,1,1,0]
     #genExample.simulateCust(chromo, 1000)
